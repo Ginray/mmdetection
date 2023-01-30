@@ -54,9 +54,16 @@ class BaseRoIExtractor(BaseModule, metaclass=ABCMeta):
         cfg = layer_cfg.copy()
         layer_type = cfg.pop('type')
         assert hasattr(ops, layer_type)
-        layer_cls = getattr(ops, layer_type)
+        # layer_cls = getattr(ops, layer_type)
+        from torch_npu.contrib.module import ROIAlign
+        layer_cls = ROIAlign
         roi_layers = nn.ModuleList(
-            [layer_cls(spatial_scale=1 / s, **cfg) for s in featmap_strides])
+            [layer_cls(output_size=(cfg['output_size'],cfg['output_size']), spatial_scale=1 / s, sampling_ratio=cfg['sampling_ratio']) for s
+             in featmap_strides])
+        print('===============>cfg', cfg)
+        print('===============>roi_layers', roi_layers)
+        # roi_layers = nn.ModuleList(
+        #     [layer_cls(spatial_scale=1 / s, **cfg) for s in featmap_strides])
         return roi_layers
 
     def roi_rescale(self, rois, scale_factor):

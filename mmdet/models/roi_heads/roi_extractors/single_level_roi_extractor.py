@@ -57,6 +57,8 @@ class SingleRoIExtractor(BaseRoIExtractor):
     @force_fp32(apply_to=('feats', ), out_fp16=True)
     def forward(self, feats, rois, roi_scale_factor=None):
         """Forward function."""
+        print('=============>start forward')
+
         out_size = self.roi_layers[0].output_size
         num_levels = len(feats)
         expand_dims = (-1, self.out_channels * out_size[0] * out_size[1])
@@ -80,6 +82,7 @@ class SingleRoIExtractor(BaseRoIExtractor):
         if roi_scale_factor is not None:
             rois = self.roi_rescale(rois, roi_scale_factor)
 
+        print('=============>start range(num_levels)')
         for i in range(num_levels):
             mask = target_lvls == i
             if torch.onnx.is_in_onnx_export():
@@ -90,6 +93,7 @@ class SingleRoIExtractor(BaseRoIExtractor):
                 rois_i = rois.clone().detach()
                 rois_i = rois_i * mask
                 mask_exp = mask.expand(*expand_dims).reshape(roi_feats.shape)
+                print('=============>start roi_feats_t')
                 roi_feats_t = self.roi_layers[i](feats[i], rois_i)
                 roi_feats_t = roi_feats_t * mask_exp
                 roi_feats = roi_feats + roi_feats_t
@@ -97,7 +101,9 @@ class SingleRoIExtractor(BaseRoIExtractor):
             inds = mask.nonzero(as_tuple=False).squeeze(1)
             if inds.numel() > 0:
                 rois_ = rois[inds]
+                print('=============>self.roi_layers[i]=', self.roi_layers[i])
                 roi_feats_t = self.roi_layers[i](feats[i], rois_)
+                print('=============>finish self.roi_layers[i]=', self.roi_layers[i])
                 roi_feats[inds] = roi_feats_t
             else:
                 # Sometimes some pyramid levels will not be used for RoI

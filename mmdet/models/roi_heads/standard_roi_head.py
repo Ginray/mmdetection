@@ -118,6 +118,10 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
     def _bbox_forward(self, x, rois):
         """Box head forward function used in both training and testing."""
         # TODO: a more flexible way to decide which feature maps to use
+        print('===>bbox_roi_extractor=', self.bbox_roi_extractor)
+        print('===>self.bbox_roi_extractor.num_inputs=', self.bbox_roi_extractor.num_inputs)
+        print('===>rois=', rois)
+
         bbox_feats = self.bbox_roi_extractor(
             x[:self.bbox_roi_extractor.num_inputs], rois)
         if self.with_shared_head:
